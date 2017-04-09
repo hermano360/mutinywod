@@ -4,11 +4,13 @@ var CronJob = require('cron').CronJob,
     cheerio = require('cheerio'),
 MongoClient = require('mongodb').MongoClient,
      assert = require('assert'),
- twilioText = require('./twiliotext.js');
+ twilioText = require('./twiliotext.js'),
+ 	contacts = require('./numbers.js');
+
 
      require('dotenv').load();
 
-var job = new CronJob('0 30 5 * * * ', updateWOD, null,true,'America/Los_Angeles');
+var job = new CronJob('55 29 5 * * * ', updateWOD, null,true,'America/Los_Angeles');
 
 
 function updateWOD(){
@@ -44,8 +46,9 @@ function sendMorningText(wodsOnline){
 	var today = new Date();
 	wodsOnline.forEach(function(wod){
 		if((today - new Date(wod.date))<86400000){
-			twilioText.sendText(process.env.TWILIO_SID,process.env.TWILIO_AUTHTOKEN,process.env.TWILIO_FROM_NUM,'7655436533',"today");
-			//twilioText.sendText(process.env.TWILIO_SID,process.env.TWILIO_AUTHTOKEN,process.env.TWILIO_FROM_NUM,'7655436533',wod.crossfit);
+			contacts().forEach(function(contact){
+				twilioText.sendText(process.env.TWILIO_SID,process.env.TWILIO_AUTHTOKEN,process.env.TWILIO_FROM_NUM,contact.number,wod.crossfit);
+			})
 		}
 	});
 }
