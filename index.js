@@ -11,7 +11,6 @@ MongoClient = require('mongodb').MongoClient,
 var job = new CronJob('0 30 5 * * * ', updateWOD, null,true,'America/Los_Angeles');
 
 
-
 function updateWOD(){
 		var url = "http://www.mutinycrossfit.com/wod";
 		dateCollector(url,function(datesOnWebpage){
