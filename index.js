@@ -10,7 +10,7 @@ MongoClient = require('mongodb').MongoClient,
 
      require('dotenv').load();
 
-var job = new CronJob('55 29 5 * * * ', updateWOD, null,true,'America/Los_Angeles');
+var job = new CronJob('55 29 5 * * 1-5', updateWOD, null,true,'America/Los_Angeles');
 
 
 function updateWOD(){
