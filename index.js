@@ -3,20 +3,18 @@ var CronJob = require('cron').CronJob,
     request = require('request'),
     cheerio = require('cheerio'),
 MongoClient = require('mongodb').MongoClient,
-     assert = require('assert');
+     assert = require('assert'),
+ twilioText = require('./twiliotext.js');
 
      require('dotenv').load();
 
-var job = new CronJob('* * * * * * ', updateWOD, null,true,'America/Los_Angeles');
+var job = new CronJob('0 30 5 * * * ', updateWOD, null,true,'America/Los_Angeles');
 
 
 
 function updateWOD(){
-		var datedate= 5;
-		var dateCollection = [];
-		var wodCollection = [];
 		var url = "http://www.mutinycrossfit.com/wod";
-		dateCollector(url,dateCollection,function(datesOnWebpage){
+		dateCollector(url,function(datesOnWebpage){
 			var justDates = dateExtractor(datesOnWebpage);
 			var dbLink = 'mongodb://'+process.env.MLAB_USER+':'+process.env.MLAB_PW+'@'+process.env.MLAB_DB;
 				MongoClient.connect(dbLink, function(err, db) {
@@ -27,12 +25,12 @@ function updateWOD(){
 							db.collection('wods').insertMany(insertDocuments,function(err,res){
 								assert.equal(err,null);
 								console.log("DB updated with "+insertDocuments.length+" new documents");
-								twilioUpdater();
+								sendMorningText(datesOnWebpage);
 								db.close();
 							});
 						} else {
-							console.log("DB already up to date!")
-							twilioUpdater();
+							console.log("DB already up to date!");
+							sendMorningText(datesOnWebpage);
 							db.close();
 						}
 					});	
@@ -40,16 +38,18 @@ function updateWOD(){
 		});
 
 		// production, will remove this and will change it only to its scheduled time.
-		job.stop();
+		//job.stop();
 }
 
-function twilioUpdater(){
-	console.log("this is where twilio updater will go");
+function sendMorningText(wodsOnline){
+	var today = new Date();
+	wodsOnline.forEach(function(wod){
+		if((today - new Date(wod.date))<86400000){
+			twilioText.sendText(process.env.TWILIO_SID,process.env.TWILIO_AUTHTOKEN,process.env.TWILIO_FROM_NUM,'7655436533',"today");
+			//twilioText.sendText(process.env.TWILIO_SID,process.env.TWILIO_AUTHTOKEN,process.env.TWILIO_FROM_NUM,'7655436533',wod.crossfit);
+		}
+	});
 }
-
-
-
-
 
 
 function compareDocsDates(dbWODS, webWODS){
@@ -78,7 +78,8 @@ function dateExtractor(wodArray){
 	return datesArray;
 }
 
-function dateCollector(url,wodArray,cb) {
+function dateCollector(url,cb) {
+	var wodArray = [];
 	request(url,function(error,response,html){
 		if(!error){
 			var $ = cheerio.load(html);
