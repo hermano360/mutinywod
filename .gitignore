@@ -1,4 +1,4 @@
 output.*
 node_modules
 wod.json
-
+.env
